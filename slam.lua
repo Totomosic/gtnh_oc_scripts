@@ -28,7 +28,40 @@ local function formatScientific(value)
     return "n/a"
   end
 
-  return string.format("%.3e", value)
+  local absValue = math.abs(value)
+  local shortSuffixes = {
+    [0] = "",
+    "K",
+    "M",
+    "G",
+    "T",
+    "P",
+    "E",
+  }
+
+  local suffixIndex = 0
+  local scaled = absValue
+  while scaled >= 1000 and suffixIndex < #shortSuffixes do
+    scaled = scaled / 1000
+    suffixIndex = suffixIndex + 1
+  end
+
+  if value < 0 then
+    scaled = -scaled
+  end
+
+  local shortValue
+  if suffixIndex == 0 then
+    shortValue = string.format("%.0f", scaled)
+  elseif math.abs(scaled) >= 100 then
+    shortValue = string.format("%.0f%s", scaled, shortSuffixes[suffixIndex])
+  elseif math.abs(scaled) >= 10 then
+    shortValue = string.format("%.1f%s", scaled, shortSuffixes[suffixIndex])
+  else
+    shortValue = string.format("%.2f%s", scaled, shortSuffixes[suffixIndex])
+  end
+
+  return string.format("%.3e (%s)", value, shortValue)
 end
 
 local function addBurnDuration(duration)
