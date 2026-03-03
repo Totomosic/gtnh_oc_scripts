@@ -5,15 +5,17 @@ local term = require('term')
 local t = component.proxy(component.list('transposer')())
 
 local antimatterSide = sides.west
-local target = 43646
+local target = 580688
 
 local matterExponent = 1.03
 local euPerBurn = 1e12 * (target ^ matterExponent)
-local burnDurations = {}
-local lastBurnDuration = nil
+local burnIntervals = {}
+local antimatterGainRates = {}
 local lastBurnStartTime = nil
 local lastTimeBetweenBurns = nil
 local burnCount = 0
+local lastAntimatterLevel = nil
+local lastAntimatterSampleTime = nil
 
 local function formatSeconds(seconds)
   if seconds == nil then
@@ -64,31 +66,60 @@ local function formatScientific(value)
   return string.format("%.3e (%s)", value, shortValue)
 end
 
-local function addBurnDuration(duration)
-  table.insert(burnDurations, duration)
-  if #burnDurations > 10 then
-    table.remove(burnDurations, 1)
+local function formatInteger(value)
+  if value == nil then
+    return "n/a"
+  end
+
+  return string.format("%d", math.floor(value + 0.5))
+end
+
+local function addBurnInterval(interval)
+  table.insert(burnIntervals, interval)
+  if #burnIntervals > 10 then
+    table.remove(burnIntervals, 1)
   end
 end
 
-local function rollingAverageDuration()
-  if #burnDurations == 0 then
+local function rollingAverageInterval()
+  if #burnIntervals == 0 then
     return nil
   end
 
   local total = 0
-  for i = 1, #burnDurations do
-    total = total + burnDurations[i]
+  for i = 1, #burnIntervals do
+    total = total + burnIntervals[i]
   end
 
-  return total / #burnDurations
+  return total / #burnIntervals
+end
+
+local function addAntimatterGainRate(gainRate)
+  table.insert(antimatterGainRates, gainRate)
+  if #antimatterGainRates > 10 then
+    table.remove(antimatterGainRates, 1)
+  end
+end
+
+local function rollingAverageAntimatterGainRate()
+  if #antimatterGainRates == 0 then
+    return nil
+  end
+
+  local total = 0
+  for i = 1, #antimatterGainRates do
+    total = total + antimatterGainRates[i]
+  end
+
+  return total / #antimatterGainRates
 end
 
 local function logStatus(antimatterLevel, didBurn)
-  local averageBurnDuration = rollingAverageDuration()
+  local averageBurnInterval = rollingAverageInterval()
+  local averageAntimatterGainRate = rollingAverageAntimatterGainRate()
   local euPerTick = nil
-  if averageBurnDuration ~= nil and averageBurnDuration > 0 then
-    euPerTick = euPerBurn / averageBurnDuration / 20
+  if averageBurnInterval ~= nil and averageBurnInterval > 0 then
+    euPerTick = euPerBurn / averageBurnInterval / 20
   end
 
   term.clear()
@@ -97,39 +128,52 @@ local function logStatus(antimatterLevel, didBurn)
   print("SLAM status")
   print("-----------")
   print(string.format("Antimatter: %d / %d", antimatterLevel, target))
+  print(string.format("Antimatter gain/s (rolling avg): %s", formatInteger(averageAntimatterGainRate)))
   print(string.format("Burn happened this cycle: %s", didBurn and "yes" or "no"))
   print(string.format("Total burns: %d", burnCount))
-  print(string.format("Last burn duration: %s", formatSeconds(lastBurnDuration)))
   print(string.format("Time between last burns: %s", formatSeconds(lastTimeBetweenBurns)))
-  print(string.format("Rolling average (last %d burns): %s", #burnDurations, formatSeconds(averageBurnDuration)))
+  print(string.format("Rolling avg time between burns (last %d): %s", #burnIntervals, formatSeconds(averageBurnInterval)))
   print(string.format("EU/Burn: %s", formatScientific(euPerBurn)))
-  print(string.format("EU/t (rolling avg): %s", formatScientific(euPerTick)))
+  print(string.format("EU/t: %s", formatScientific(euPerTick)))
 end
 
 while true do
   -- Extract Fluid
   local level1 = t.getTankLevel(sides.west)
   local level2 = t.getTankLevel(sides.east)
-  local antimatterLevel = t.getTankLevel(antimatterSide)
   local didBurn = false
     
   if (level1 >= target) and (level2 >= target) then
     local burnStartTime = computer.uptime()
     if lastBurnStartTime ~= nil then
       lastTimeBetweenBurns = burnStartTime - lastBurnStartTime
+      addBurnInterval(lastTimeBetweenBurns)
     end
 
     t.transferFluid(sides.west, sides.down, target)
     t.transferFluid(sides.east, sides.down, target)
 
-    local burnEndTime = computer.uptime()
-    lastBurnDuration = burnEndTime - burnStartTime
     lastBurnStartTime = burnStartTime
     burnCount = burnCount + 1
     didBurn = true
 
-    addBurnDuration(lastBurnDuration)
   end
+
+  local antimatterLevel = t.getTankLevel(antimatterSide)
+  local sampleTime = computer.uptime()
+  if lastAntimatterLevel ~= nil and lastAntimatterSampleTime ~= nil then
+    local elapsed = sampleTime - lastAntimatterSampleTime
+    if elapsed > 0 then
+      local gained = antimatterLevel - lastAntimatterLevel
+      if gained < 0 then
+        gained = gained + target
+      end
+      local gainRate = gained / elapsed
+      addAntimatterGainRate(gainRate)
+    end
+  end
+  lastAntimatterLevel = antimatterLevel
+  lastAntimatterSampleTime = sampleTime
 
   logStatus(antimatterLevel, didBurn)
 
