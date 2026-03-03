@@ -4,6 +4,7 @@ local computer = require('computer')
 local term = require('term')
 local t = component.proxy(component.list('transposer')())
 
+local ssassEuT = 3.28e13
 local antimatterSide = sides.west
 local target = 580688
 
@@ -135,6 +136,9 @@ local function logStatus(antimatterLevel, didBurn)
   print(string.format("Rolling avg time between burns (last %d): %s", #burnIntervals, formatSeconds(averageBurnInterval)))
   print(string.format("EU/Burn: %s", formatScientific(euPerBurn)))
   print(string.format("EU/t: %s", formatScientific(euPerTick)))
+  if euPerTick ~= nil then
+    print(string.format("EU/t Net: %s", formatScientific(euPerTick - ssassEuT)))
+  end
 end
 
 while true do
