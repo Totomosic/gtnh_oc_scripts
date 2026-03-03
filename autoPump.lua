@@ -63,6 +63,11 @@ local master = {
 
 -- The % of the Target when Considered Complete (Default: 95%)
 local threshold = 0.95
+-- Median mode target offset (Target = Median + Offset)
+local dynamicTargetOffset = 10e9
+-- Digital Singularity storage size. Used to avoid overfilling in median mode.
+local singularityCellSize = 4.61e18
+local maxStorageAmount = singularityCellSize * 0.99
 -- The Upper Limit on the Duration of an Iteration (Default: 30s)
 local maxBatchSize = 30
 -- The Text Color (Default: '\27[1;36m')
@@ -72,6 +77,8 @@ local color = '\27[1;36m'
 -- Cyan = '\27[1;36m' || Green = '\27[1;32m' || Red = '\27[0;31m' || Magenta = '\27[0;35m'
 
 -- =================== END CONFIG ====================
+local phase = 'target'
+local medianTarget = 0
 
 local function findPumps()
   for address in component.list('gt_machine') do
@@ -91,26 +98,58 @@ local function findPumps()
   table.sort(pumps, function(a, b) return a.priority > b.priority end)
 end
 
-local function updateFluids()
-
-  -- Reset Everything to Zero
-  local lowFluids = {}
+local function refreshFluidAmounts()
   for _, fluid in pairs(master) do fluid.amount = 0 end
 
-  -- Update Fluids from ME Network
   for _, fluid in ipairs(me.getFluidsInNetwork()) do
     if master[fluid.label] ~= nil then master[fluid.label].amount = fluid.amount end
   end
 
-  -- Update Fluids from Pumps
   for _, pump in ipairs(pumps) do
     if pump.fluid ~= nil then master[pump.fluid].amount = master[pump.fluid].amount + pump.amount end
   end
+end
 
-  -- Identify Low Fluids
-  for _, fluid in pairs(master) do
-    if fluid.amount < threshold * fluid.target then table.insert(lowFluids, fluid) end
+local function getMedianTarget()
+  local amounts = {}
+  for _, fluid in pairs(master) do table.insert(amounts, fluid.amount) end
+  table.sort(amounts)
+
+  if #amounts == 0 then return maxStorageAmount, 0 end
+
+  local medianAmount = amounts[math.ceil(#amounts / 2)]
+  return math.min(medianAmount + dynamicTargetOffset, maxStorageAmount), medianAmount
+end
+
+local function updateFluids()
+  local lowFluids = {}
+  refreshFluidAmounts()
+
+  if phase == 'target' then
+    for _, fluid in pairs(master) do
+      if fluid.target > 0 and fluid.amount < threshold * fluid.target then
+        table.insert(lowFluids, fluid)
+      end
+    end
+
+    if #lowFluids == 0 then
+      phase = 'median'
+      for _, pump in ipairs(pumps) do pump.fluid, pump.amount = nil, 0 end
+      refreshFluidAmounts()
+      medianTarget = getMedianTarget()
+      print(string.format('autoPump: Target phase complete. Switching to median mode (new target: %.3e L)', medianTarget))
+    end
   end
+
+  if phase == 'median' then
+    medianTarget = getMedianTarget()
+    for _, fluid in pairs(master) do
+      if fluid.amount < medianTarget and fluid.amount < maxStorageAmount then
+        table.insert(lowFluids, fluid)
+      end
+    end
+  end
+
   return lowFluids
 end
 
@@ -122,12 +161,22 @@ local function updatePumps(lowFluids)
     while pump.module.isMachineActive() do os.sleep(2) end
     pump.fluid, pump.amount = nil, 0
 
-    -- Sort Low Fluids based on Priority and % of Target
-    table.sort(lowFluids, function(a, b)
-      return (1 - (a.amount / a.target) ^ a.priority) < (1 - (b.amount / b.target) ^ b.priority)
-    end)
+    if phase == 'target' then
+      table.sort(lowFluids, function(a, b)
+        local aScore = 1 - (a.amount / a.target) ^ a.priority
+        local bScore = 1 - (b.amount / b.target) ^ b.priority
+        return aScore > bScore
+      end)
+    else
+      table.sort(lowFluids, function(a, b)
+        if a.priority ~= b.priority then
+          return a.priority > b.priority
+        end
+        return (a.amount / medianTarget) < (b.amount / medianTarget)
+      end)
+    end
 
-    local fluid = lowFluids[#lowFluids]
+    local fluid = lowFluids[1]
     if fluid ~= nil then
 
       -- Change Planet and Gas for all Threads
@@ -136,23 +185,32 @@ local function updatePumps(lowFluids)
         pump.module.setParameters(2*(i-1), 1, fluid.setting[2]) -- Gas
       end
 
-      -- Change Batch Size based on Distance from Target
-      local batchSize = math.min(maxBatchSize, math.ceil((fluid.target - fluid.amount) / (fluid.rate * pump.mult)))
-      pump.module.setParameters(9, 1, batchSize) -- Batch Size
-      print(string.format('autoPump: Running %s for %d Seconds', fluid.label, batchSize))
+      local desiredTarget = phase == 'target' and fluid.target or medianTarget
+      local remaining = math.max(0, desiredTarget - fluid.amount)
+      if remaining <= 0 then
+        table.remove(lowFluids, 1)
+      else
+        -- Change Batch Size based on Distance from Target
+        local batchSize = math.min(maxBatchSize, math.ceil(remaining / (fluid.rate * pump.mult)))
+        pump.module.setParameters(9, 1, batchSize) -- Batch Size
+        print(string.format('autoPump: [%s] Running %s for %d Seconds', phase, fluid.label, batchSize))
 
-      -- Preemptively Update Fluid Amount
-      pump.fluid = fluid.label
-      pump.amount = batchSize * fluid.rate * pump.mult
-      fluid.amount = fluid.amount + pump.amount
+        -- Preemptively Update Fluid Amount
+        pump.fluid = fluid.label
+        pump.amount = batchSize * fluid.rate * pump.mult
+        fluid.amount = fluid.amount + pump.amount
 
-      -- Remove Fluid if above Target Threshold
-      if fluid.amount >= threshold * fluid.target then table.remove(lowFluids, 1) end
+        if phase == 'target' then
+          if fluid.amount >= threshold * fluid.target then table.remove(lowFluids, 1) end
+        else
+          if fluid.amount >= medianTarget then table.remove(lowFluids, 1) end
+        end
 
-      -- Run Once
-      pump.module.setWorkAllowed(true)
-      os.sleep(0.1)
-      pump.module.setWorkAllowed(false)
+        -- Run Once
+        pump.module.setWorkAllowed(true)
+        os.sleep(0.1)
+        pump.module.setWorkAllowed(false)
+      end
     else
       return
     end
@@ -161,10 +219,11 @@ end
 
 local function parse(label)
   local fluid = master[label]
-  if fluid.target == 0 then
+  local target = phase == 'median' and medianTarget or fluid.target
+  if target <= 0 then
     return string.format('[----------] %-20s', fluid.label)
   else
-    local percent = math.min(10, math.ceil(10 * (fluid.amount / fluid.target)))
+    local percent = math.min(10, math.ceil(10 * (fluid.amount / target)))
     return string.format('[%s%s] %-20s', color .. string.rep('■', percent) .. '\27[0m', string.rep('□', 10-percent), fluid.label)
   end
 end
@@ -172,7 +231,13 @@ end
 local function printDashboard()
   term.clear()
   print('\n┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐')
-  print('│' .. color .. ' Space Elevator Fluid Levels (% of Target)' .. '\27[0m' .. string.rep(' ', 95) .. '│')
+  local status
+  if phase == 'median' then
+    status = string.format(' Mode: MEDIAN  | Shared Target: %.3e L', medianTarget)
+  else
+    status = ' Mode: TARGET  | Shared Target: N/A'
+  end
+  print('│' .. color .. ' Space Elevator Fluid Levels (% of Target)' .. '\27[0m' .. status .. string.rep(' ', math.max(0, 58 - #status)) .. '│')
   print('├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤')
   print(string.format('│ %s %s %s %s │', parse('Hydrogen'),      parse('Argon'),            parse('Oil'),             parse('Hydrogen Sulfide')))
   print(string.format('│ %s %s %s %s │', parse('Helium'),        parse('Radon'),            parse('Raw Oil'),         parse('Sulfuric Acid')))
@@ -205,7 +270,7 @@ end)
 -- ====================== MAIN =======================
 
 local main = thread.create(function()
-  local n = 1
+  local n = 0
   findPumps()
   for k, fluid in pairs(master) do fluid.label = k end
 
@@ -216,22 +281,23 @@ local main = thread.create(function()
     local lowFluids = updateFluids()
     if next(lowFluids) ~= nil then
 
-      if n % 5 == 1 then printDashboard() end
+      if n % 5 == 0 then printDashboard() end
 
       -- Update Pump Settings
       updatePumps(lowFluids)
       n = n+1
 
-    elseif n > 0 then
-
-      -- Reset Pump Settings
+    else
       for _, pump in ipairs(pumps) do
         pump.fluid, pump.amount = nil, 0
       end
 
-      -- Nothing to Update, Sleep 3 Minutes
       printDashboard()
-      print('autoPump: Sleeping...\n')
+      if phase == 'median' then
+        print('autoPump: Median target currently met. Sleeping...\n')
+      else
+        print('autoPump: Sleeping...\n')
+      end
       os.sleep(180)
       n=0
     end
@@ -246,7 +312,7 @@ local cleanUp = thread.create(function()
       for _=1, pump.threads do pump.module.setWorkAllowed(false) end
     end
     main.kill()
-    keyhandler.kill()
+    keyHandler.kill()
     os.exit(0)
 end)
 
