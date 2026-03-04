@@ -18,48 +18,48 @@ local master = {
   -- Planet 3 -----------------------------------------------------------------------------
   ['Ender Goo'] =         {target=0,     priority=1,  setting={3,1},  rate=32000}, -- Gas 1
   ['Very Heavy Oil'] =    {target=0,     priority=1,  setting={3,2},  rate=1400000}, -- Gas 2
-  ['Lava'] =              {target=10e9,  priority=1,  setting={3,3},  rate=1800000}, -- Gas 3
+  ['Lava'] =              {target=30e9,  priority=1,  setting={3,3},  rate=1800000}, -- Gas 3
   ['Natural Gas'] =       {target=0,     priority=1,  setting={3,4},  rate=1400000}, -- Gas 4
   -- Planet 4 -----------------------------------------------------------------------------
-  ['Sulfuric Acid'] =     {target=10e9,  priority=1,  setting={4,1},  rate=784000}, -- Gas 1
-  ['Molten Iron'] =       {target=10e9,  priority=2,  setting={4,2},  rate=896000}, -- Gas 2
-  ['Oil'] =               {target=10e9,  priority=1,  setting={4,3},  rate=1400000}, -- Gas 3
-  ['Heavy Oil'] =         {target=0,     priority=1,  setting={4,4},  rate=1792000}, -- Gas 4
-  ['Molten Lead'] =       {target=10e9,  priority=1,  setting={4,5},  rate=896000}, -- Gas 5
+  ['Sulfuric Acid'] =     {target=50e9,  priority=1,  setting={4,1},  rate=784000}, -- Gas 1
+  ['Molten Iron'] =       {target=50e9,  priority=2,  setting={4,2},  rate=896000}, -- Gas 2
+  ['Oil'] =               {target=50e9,  priority=1,  setting={4,3},  rate=1400000}, -- Gas 3
+  ['Heavy Oil'] =         {target=50e9,     priority=1,  setting={4,4},  rate=1792000}, -- Gas 4
+  ['Molten Lead'] =       {target=50e9,  priority=1,  setting={4,5},  rate=896000}, -- Gas 5
   ['Raw Oil'] =           {target=0,     priority=1,  setting={4,6},  rate=1400000}, -- Gas 6
   ['Light Oil'] =         {target=0,     priority=1,  setting={4,7},  rate=780000}, -- Gas 7
-  ['Carbon Dioxide'] =    {target=1e9,   priority=1,  setting={4,8},  rate=1680000}, -- Gas 8
+  ['Carbon Dioxide'] =    {target=10e9,   priority=1,  setting={4,8},  rate=1680000}, -- Gas 8
   -- Planet 5 -----------------------------------------------------------------------------
   ['Carbon Monoxide'] =   {target=10e9,  priority=1,  setting={5,1},  rate=4480000}, -- Gas 1
-  ['Helium-3'] =          {target=10e9,  priority=1,  setting={5,2},  rate=2800000}, -- Gas 2
-  ['Salt Water'] =        {target=10e9,  priority=1,  setting={5,3},  rate=2800000}, -- Gas 3
-  ['Helium'] =            {target=10e9,  priority=3,  setting={5,4},  rate=1400000}, -- Gas 4
+  ['Helium-3'] =          {target=200e9,  priority=1,  setting={5,2},  rate=2800000}, -- Gas 2
+  ['Salt Water'] =        {target=100e9,  priority=1,  setting={5,3},  rate=2800000}, -- Gas 3
+  ['Helium'] =            {target=200e9,  priority=3,  setting={5,4},  rate=1400000}, -- Gas 4
   ['Liquid Oxygen'] =     {target=0,     priority=1,  setting={5,5},  rate=896000}, -- Gas 5
-  ['Neon'] =              {target=1e9,   priority=1,  setting={5,6},  rate=32000}, -- Gas 6
-  ['Argon'] =             {target=1e9,   priority=1,  setting={5,7},  rate=32000}, -- Gas 7
-  ['Krypton'] =           {target=1e9,   priority=1,  setting={5,8},  rate=8000}, -- Gas 8
-  ['Methane'] =           {target=1e9,   priority=1,  setting={5,9},  rate=1792000}, -- Gas 9
+  ['Neon'] =              {target=10e9,   priority=1,  setting={5,6},  rate=32000}, -- Gas 6
+  ['Argon'] =             {target=10e9,   priority=1,  setting={5,7},  rate=32000}, -- Gas 7
+  ['Krypton'] =           {target=10e9,   priority=1,  setting={5,8},  rate=8000}, -- Gas 8
+  ['Methane'] =           {target=10e9,   priority=1,  setting={5,9},  rate=1792000}, -- Gas 9
   ['Hydrogen Sulfide'] =  {target=0,     priority=1,  setting={5,10},  rate=392000}, -- Gas 10
   ['Ethane'] =            {target=0,     priority=1,  setting={5,11},  rate=1194000}, -- Gas 11
   -- Planet 6 -----------------------------------------------------------------------------
-  ['Deuterium'] =         {target=10e9,  priority=1,  setting={6,1},  rate=1568000}, -- Gas 1
-  ['Tritium'] =           {target=10e9,  priority=1,  setting={6,2},  rate=240000}, -- Gas 2
-  ['Ammonia'] =           {target=10e9,  priority=2,  setting={6,3},  rate=240000}, -- Gas 3
-  ['Xenon'] =             {target=10e9,  priority=2,  setting={6,4},  rate=16000}, -- Gas 4
-  ['Ethylene'] =          {target=10e9,  priority=1,  setting={6,5},  rate=1792000}, -- Gas 5
+  ['Deuterium'] =         {target=100e9,  priority=1,  setting={6,1},  rate=1568000}, -- Gas 1
+  ['Tritium'] =           {target=100e9,  priority=1,  setting={6,2},  rate=240000}, -- Gas 2
+  ['Ammonia'] =           {target=50e9,  priority=2,  setting={6,3},  rate=240000}, -- Gas 3
+  ['Xenon'] =             {target=100e9,  priority=1,  setting={6,4},  rate=16000}, -- Gas 4
+  ['Ethylene'] =          {target=50e9,  priority=1,  setting={6,5},  rate=1792000}, -- Gas 5
   -- Planet 7 -----------------------------------------------------------------------------
-  ['Hydrofluoric Acid'] = {target=10e9,  priority=1,  setting={7,1},  rate=672000}, -- Gas 1
-  ['Fluorine'] =          {target=10e9,  priority=1,  setting={7,2},  rate=1792000}, -- Gas 2
-  ['Nitrogen'] =          {target=10e9,  priority=3,  setting={7,3},  rate=1792000}, -- Gas 3
-  ['Oxygen'] =            {target=10e9,  priority=3,  setting={7,4},  rate=1729000}, -- Gas 4
+  ['Hydrofluoric Acid'] = {target=50e9,  priority=1,  setting={7,1},  rate=672000}, -- Gas 1
+  ['Fluorine'] =          {target=200e9,  priority=3,  setting={7,2},  rate=1792000}, -- Gas 2
+  ['Nitrogen'] =          {target=200e9,  priority=3,  setting={7,3},  rate=1792000}, -- Gas 3
+  ['Oxygen'] =            {target=200e9,  priority=3,  setting={7,4},  rate=1729000}, -- Gas 4
   -- Planet 8 -----------------------------------------------------------------------------
-  ['Hydrogen'] =          {target=10e9,  priority=3,  setting={8,1},  rate=1568000}, -- Gas 1
-  ['Liquid Air'] =        {target=0,     priority=1,  setting={8,2},  rate=875000}, -- Gas 2
-  ['Molten Copper'] =     {target=10e9,  priority=2,  setting={8,3},  rate=672000}, -- Gas 3
+  ['Hydrogen'] =          {target=200e9,  priority=3,  setting={8,1},  rate=1568000}, -- Gas 1
+  ['Liquid Air'] =        {target=100e9,     priority=3,  setting={8,2},  rate=875000}, -- Gas 2
+  ['Molten Copper'] =     {target=50e9,  priority=2,  setting={8,3},  rate=672000}, -- Gas 3
   ['Unknown Liquid'] =    {target=10e9,  priority=1,  setting={8,4},  rate=672000}, -- Gas 4
-  ['Distilled Water'] =   {target=10e9,  priority=1,  setting={8,5},  rate=17920000}, -- Gas 5
-  ['Radon'] =             {target=1e9,   priority=1,  setting={8,6},  rate=64000}, -- Gas 6
-  ['Molten Tin'] =        {target=10e9,  priority=1,  setting={8,7},  rate=672000}} -- Gas 7
+  ['Distilled Water'] =   {target=100e9,  priority=3,  setting={8,5},  rate=17920000}, -- Gas 5
+  ['Radon'] =             {target=50e9,   priority=2,  setting={8,6},  rate=64000}, -- Gas 6
+  ['Molten Tin'] =        {target=50e9,  priority=1,  setting={8,7},  rate=672000}} -- Gas 7
 
 -- The % of the Target when Considered Complete (Default: 95%)
 local threshold = 0.95
@@ -142,6 +142,18 @@ local function updateFluids()
   end
 
   if phase == 'median' then
+    for _, fluid in pairs(master) do
+      if fluid.target > 0 and fluid.amount < threshold * fluid.target then
+        table.insert(lowFluids, fluid)
+      end
+    end
+
+    if #lowFluids > 0 then
+      phase = 'target'
+      print(string.format('autoPump: %d target fluid(s) dropped below threshold. Returning to target mode.', #lowFluids))
+      return lowFluids
+    end
+
     medianTarget = getMedianTarget()
     for _, fluid in pairs(master) do
       if fluid.amount < medianTarget and fluid.amount < maxStorageAmount then
