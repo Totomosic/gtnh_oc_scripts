@@ -1,0 +1,6 @@
+[submodule "Level-Maintainer"]
+	path = Level-Maintainer
+	url = https://github.com/Totomosic/Level-Maintainer
+[submodule "GTNH-OC-God-Forge-Control"]
+	path = GTNH-OC-God-Forge-Control
+	url = https://github.com/Totomosic/GTNH-OC-God-Forge-Control
