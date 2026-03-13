@@ -1,0 +1,10 @@
+[
+    { "grade": 1, "boost": true, "success": 0.7, "output": "100m" },
+    { "grade": 2, "boost": true, "success": 0.8, "output": "100m" },
+    { "grade": 3, "boost": false, "success": 1.0, "output": "1m" },
+    { "grade": 4, "boost": false, "success": 1.0, "output": "50m" },
+    { "grade": 5, "boost": false, "success": 0.99, "output": "1m" },
+    { "grade": 6, "boost": true, "success": 0.9, "output": "50m" },
+    { "grade": 7, "boost": false, "success": 1.0, "output": "2m" },
+    { "grade": 8, "boost": false, "success": 1.0, "output": "100m" }
+]
